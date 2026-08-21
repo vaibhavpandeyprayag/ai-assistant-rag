@@ -155,6 +155,24 @@ Develop incrementally:
 
 Before implementation, analyze the requirements and create an implementation plan. Implement and test each phase before proceeding to the next.
 
+## Development Setup
+
+```powershell
+# One-time environment bootstrap
+conda create -n rag python=3.12 -y
+conda activate rag
+pip install -r requirements.txt -r requirements-dev.txt
+
+# Run the API locally
+uvicorn app.main:app --reload   # then open http://127.0.0.1:8000/health
+
+# Quality gates
+pytest
+ruff check .
+```
+
+Runtime settings are configured via environment variables; copy `.env.example` to `.env` for local overrides. Never commit `.env`.
+
 ## Expected Result
 
 A complete end-to-end RAG system where users can upload documents, index them, ask questions through REST APIs, retrieve relevant context, receive grounded LLM-generated answers, and see the supporting document sources.

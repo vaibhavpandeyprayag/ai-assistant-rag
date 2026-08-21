@@ -1,0 +1,4 @@
+# Development and test dependencies.
+httpx==0.28.1  # ASGI transport used by FastAPI TestClient
+pytest==9.1.1
+ruff==0.16.4
