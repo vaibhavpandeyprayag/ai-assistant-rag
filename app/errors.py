@@ -24,3 +24,24 @@ class ConfigurationError(RagError):
 
     code = "configuration_error"
     http_status = 500
+
+
+class UnsupportedFormatError(RagError):
+    """Raised when a document has a file extension we cannot process."""
+
+    code = "unsupported_format"
+    http_status = 415
+
+
+class DocumentParseError(RagError):
+    """Raised when a document exists but cannot be read or parsed."""
+
+    code = "document_parse_error"
+    http_status = 422
+
+
+class EmptyDocumentError(RagError):
+    """Raised when a document yields no extractable text."""
+
+    code = "empty_document"
+    http_status = 422
