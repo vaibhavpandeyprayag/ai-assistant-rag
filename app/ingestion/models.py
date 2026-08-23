@@ -24,3 +24,19 @@ class LoadedDocument:
     def full_text(self) -> str:
         """All section text joined with blank lines between pages."""
         return "\n\n".join(section.text for section in self.sections)
+
+
+@dataclass(slots=True)
+class Chunk:
+    """A retrieval-ready text unit with complete source metadata."""
+
+    #: Stable identifier in the form ``"{document_id}::{chunk_index}"``.
+    chunk_id: str
+    document_id: str
+    #: Zero-based position of the chunk within its document.
+    chunk_index: int
+    text: str
+    #: Page the chunk starts on; ``None`` when the format has no pages.
+    page_number: int | None
+    filename: str
+    source: str
