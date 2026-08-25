@@ -52,3 +52,10 @@ class EmbeddingError(RagError):
 
     code = "embedding_error"
     http_status = 500
+
+
+class VectorStoreError(RagError):
+    """Raised when vector store operations fail."""
+
+    code = "vector_store_error"
+    http_status = 500
