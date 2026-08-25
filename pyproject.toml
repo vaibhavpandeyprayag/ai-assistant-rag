@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m \"not slow\""
 markers = [
     "slow: tests that download models or run long jobs (deselect with '-m \"not slow\"')",
     "requires_model: tests requiring locally available model weights",

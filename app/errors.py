@@ -45,3 +45,10 @@ class EmptyDocumentError(RagError):
 
     code = "empty_document"
     http_status = 422
+
+
+class EmbeddingError(RagError):
+    """Raised when embedding generation fails."""
+
+    code = "embedding_error"
+    http_status = 500
