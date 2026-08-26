@@ -27,6 +27,17 @@ class LoadedDocument:
 
 
 @dataclass(slots=True)
+class IngestionResult:
+    """Outcome of a single file ingestion."""
+
+    document_id: str
+    filename: str
+    n_chunks: int
+    status: str
+    elapsed_ms: float
+
+
+@dataclass(slots=True)
 class Chunk:
     """A retrieval-ready text unit with complete source metadata."""
 
