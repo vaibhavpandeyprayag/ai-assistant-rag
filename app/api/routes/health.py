@@ -20,6 +20,5 @@ def read_health(
     return HealthResponse(
         status="ok",
         version=__version__,
-        llm_provider=settings.llm_provider,
         embedding_model=settings.embedding_model,
     )

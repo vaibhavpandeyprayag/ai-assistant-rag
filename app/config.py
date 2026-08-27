@@ -26,8 +26,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
 
     # --- LLM ----------------------------------------------------------------
-    llm_provider: Literal["local", "hf"] = "local"
-    local_llm_model: str = "llama3.1:8b"
+    llm_provider: Literal["hf"] = "hf"
     huggingface_model: str = "meta-llama/Llama-3.1-8B-Instruct"
     huggingface_api_key: SecretStr | None = None
 

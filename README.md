@@ -10,7 +10,6 @@ The system will use:
 - FastAPI
 - LangChain
 - ChromaDB
-- Local LLMs
 - Hugging Face models/APIs
 - Pydantic
 - pytest
@@ -64,12 +63,9 @@ The LLM should answer using retrieved context, avoid unsupported claims, and ind
 
 ### LLM Support
 
-Support both:
+Uses the Hugging Face Inference API for generation, configured via `HUGGINGFACE_API_KEY` and `HUGGINGFACE_MODEL` (e.g. `meta-llama/Llama-3.1-8B-Instruct`).
 
-- Local LLMs
-- Hugging Face models/APIs
-
-LLM selection should be configuration-driven so the RAG pipeline does not depend on one provider.
+LLM selection is configuration-driven so the RAG pipeline does not depend on a hard-coded model.
 
 ### REST API
 
@@ -147,11 +143,10 @@ Develop incrementally:
 4. Embeddings + ChromaDB
 5. Semantic retrieval
 6. RAG pipeline
-7. Local LLM integration
-8. Hugging Face integration
-9. FastAPI APIs
-10. Testing and evaluation
-11. Documentation and cleanup
+7. Hugging Face LLM integration
+8. FastAPI APIs
+9. Testing and evaluation
+10. Documentation and cleanup
 
 Before implementation, analyze the requirements and create an implementation plan. Implement and test each phase before proceeding to the next.
 

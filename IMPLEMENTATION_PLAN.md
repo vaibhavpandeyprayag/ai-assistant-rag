@@ -7,7 +7,7 @@
 
 ## 1. Requirements Summary
 
-- **Stack**: Python, FastAPI, LangChain, ChromaDB, Pydantic, pytest; Local LLMs + Hugging Face
+- **Stack**: Python, FastAPI, LangChain, ChromaDB, Pydantic, pytest; Hugging Face LLM (Inference API)
 - **Ingestion**: PDF / DOCX / TXT / MD → extract → clean → chunk → embed → ChromaDB, preserving `document_id`, `filename`, `source`, `chunk_id`, `page_number`
 - **QA pipeline**: query → embed → top-K similarity search → context → grounded prompt → LLM → answer + sources
 - **API**: `/health`, `/documents/upload`, `/documents/ingest`, `/search`, `/chat`
@@ -16,7 +16,6 @@
 ## 2. Environment Constraints (observed)
 
 - Active interpreter was Python 3.9.25 (miniconda base, EOL) → project targets a dedicated conda env with Python 3.12. **[confirmed]**
-- Ollama is installed locally → used for the "Local LLM" requirement (separate process, no C++ compilation issues on Windows, trivially mockable HTTP boundary).
 - Only `pip` available (no uv/poetry) → plain `requirements.txt` / `requirements-dev.txt`.
 
 ## 3. Proposed Architecture
@@ -38,7 +37,7 @@ app/
   embeddings/             # EmbeddingProvider protocol + local ST + HF-API impls + factory
   vectordb/               # VectorStoreRepository protocol + ChromaPersistentRepository
   retrieval/retriever.py  # query → embed → top-K → RetrievedChunk[]
-  llm/                    # LLMProvider protocol + Ollama + HF impls + factory
+  llm/                    # LLMProvider protocol + HF impl + factory
   rag/                    # prompts.py, context_builder.py, pipeline.py
   services/               # ingestion_service.py, chat_service.py (orchestration)
 data/{uploads,chroma}/    # gitignored runtime artifacts
@@ -51,8 +50,8 @@ tests/{unit,integration,api}
 | Decision | Recommendation | Rationale / alternative |
 |---|---|---|
 | LangChain depth | **Lean** **[confirmed]**: only `langchain-text-splitters` for chunking; direct `pypdf`, `python-docx`, `sentence-transformers`, `chromadb`, `httpx`, `huggingface_hub` behind 3 small internal Protocols | Full LangChain partner packages reduce custom code but add dependency churn and opaque behavior; direct libs keep page-level metadata control and stable APIs. Keeps README's LangChain requirement satisfied where it adds value |
-| Local LLM | **Ollama via HTTP** (`httpx`) | Already installed; avoids llama-cpp-python compilation pain on Windows; transformers-pipeline is too slow for generation |
-| HF integration | **Inference API only** **[confirmed]** via `huggingface_hub.InferenceClient` | "models/APIs" — API path is the distinct second provider; local HF inference duplicates the Ollama role |
+| Local LLM | **Removed from scope** **[confirmed]** — no local provider | Generation uses Hugging Face Inference API only |
+| HF integration | **Inference API only** **[confirmed]** via `huggingface_hub.InferenceClient` | The single LLM provider; authenticated with `HUGGINGFACE_API_KEY` |
 | Upload vs ingest split | Upload validates + persists raw file (fast); ingest processes stored files (slow, re-runnable) | Decouples embedding cost from upload; enables re-ingest with different chunk params |
 | Sync route handlers | Yes (FastAPI threadpool) | Workload is CPU/blocking-IO bound; avoids async complexity |
 | Abstractions | Exactly 3 Protocols: `EmbeddingProvider`, `VectorStoreRepository`, `LLMProvider` | Required by AGENTS.md (swappable store/provider, LLM-free retrieval tests); no more than needed |
@@ -84,8 +83,7 @@ Errors: {"code": "...", "message": "..."} — 404/413/415/422/500/503; never sta
 ### Configuration Keys
 
 ```
-LLM_PROVIDER            # local | hf
-LOCAL_LLM_MODEL         # e.g. llama3.1:8b (Ollama tag)
+LLM_PROVIDER            # hf (only supported provider)
 HUGGINGFACE_API_KEY     # secret, env only
 HUGGINGFACE_MODEL       # HF Inference chat model id
 EMBEDDING_MODEL         # default sentence-transformers/all-MiniLM-L6-v2
@@ -166,14 +164,14 @@ UPLOAD_MAX_SIZE_MB      # default ~20
 5. **Testing**: ranking sanity with fake embedder; top-k/filter/threshold behavior; empty-index path.
 6. **Acceptance**: Satisfies AGENTS.md "retrieval independently testable without requiring an LLM".
 
-### Phase 8 — LLM abstraction (Ollama + Hugging Face)
+### Phase 8 — LLM abstraction (Hugging Face)
 
-1. **Objective**: Provider-neutral generation; switching = env change only.
-2. **Requirements**: `LLMProvider.generate(messages, options) -> str`; `OllamaLLM` (httpx → `localhost:11434`, connection failure → `LLMUnavailableError`); `HuggingFaceLLM` (`InferenceClient.chat_completion`, auth failure → `LLMAuthError`); factory on `LLM_PROVIDER ∈ {local, hf}`; `FakeLLMProvider` test utility; secrets never logged.
-3. **Files**: `app/llm/{base,ollama_llm,hf_llm,factory}.py`, `tests/utils/fakes.py`, `tests/unit/test_llm_*.py` (httpx `MockTransport` — no extra mocking dep).
+1. **Objective**: Provider-neutral generation from Hugging Face Inference API; switching models = config change only.
+2. **Requirements**: `LLMProvider.generate(messages, options) -> str`; `HuggingFaceLLM` (`InferenceClient.chat_completion`, auth failure → `LLMAuthError`, connection/API failure → `LLMUnavailableError`); factory on `LLM_PROVIDER = "hf"` (the only provider); `FakeLLMProvider` test utility; secrets never logged.
+3. **Files**: `app/llm/{base,hf_llm,factory}.py`, `tests/utils/fakes.py`, `tests/unit/test_llm_hf.py` (httpx `MockTransport` — no extra mocking dep).
 4. **Dependencies**: Phase 1.
 5. **Testing**: request building; timeout/error mapping; factory selection; log redaction.
-6. **Acceptance**: Both providers behind one interface; failures typed and safe.
+6. **Acceptance**: Single HF provider behind one interface; failures typed and safe.
 
 ### Phase 9 — RAG pipeline
 
@@ -205,7 +203,7 @@ UPLOAD_MAX_SIZE_MB      # default ~20
 ### Phase 12 — Documentation & polish
 
 1. **Objective**: Hand-off quality; fresh-machine reproducibility.
-2. **Requirements**: README: setup (conda env, Python ≥3.11), `ollama pull <model>`, env var reference, curl examples, architecture diagram, eval usage; finalize `.env.example`; lint clean; dead code removed.
+2. **Requirements**: README: setup (conda env, Python ≥3.11), `HUGGINGFACE_API_KEY` env var, env var reference, curl examples, architecture diagram, eval usage; finalize `.env.example`; lint clean; dead code removed.
 3. **Files**: `README.md`, `.env.example`, minor refactors.
 4. **Dependencies**: all.
 5. **Testing**: full suite green; manual smoke test following README only.
@@ -219,7 +217,7 @@ UPLOAD_MAX_SIZE_MB      # default ~20
 P1 Foundation
  ├─ P2 Loaders → P3 Chunking ─┐
  ├─ P4 Embeddings ────────────┼─→ P5 Chroma repo → P6 Ingestion ─┐
- └─ P8 LLM providers ─────────┴─→ P7 Retriever ──→ P9 RAG ───────┼→ P10 API → P12 Docs
+ └─ P8 LLM (HF) ───────────┴─→ P7 Retriever ──→ P9 RAG ───────┼→ P10 API → P12 Docs
                                                                  └→ P11 Evaluation
 ```
 
@@ -234,7 +232,7 @@ Sequential execution P1 → P12 works as-is; P4 and P8 are independent and can b
 | 5 | ChromaDB repository behind protocol | 3, 4 |
 | 6 | Ingestion service (idempotent end-to-end indexing) | 2–5 |
 | 7 | Retrieval service (LLM-free) | 4, 5 |
-| 8 | LLM providers (Ollama + HF API) + factory | 1 |
+| 8 | LLM provider (HF Inference API) + factory | 1 |
 | 9 | RAG pipeline (context builder, prompts, orchestration) | 7, 8 |
 | 10 | REST API (upload/ingest/search/chat) + error handling | 6, 7, 9 |
 | 11 | Evaluation harness (P@K, R@K, MRR + groundedness proxy) | 6, 7, 9 |
@@ -249,4 +247,4 @@ Sequential execution P1 → P12 works as-is; P4 and P8 are independent and can b
 
 1. **LangChain depth**: Lean — only `langchain-text-splitters`; direct libraries elsewhere behind 3 internal Protocols.
 2. **Python environment**: New conda env (`rag`) with Python 3.12; active 3.9 base is EOL.
-3. **Hugging Face scope**: Inference API only (`InferenceClient` + `HUGGINGFACE_API_KEY`); local LLM role covered by Ollama.
+3. **LLM provider**: Hugging Face Inference API only (`InferenceClient` + `HUGGINGFACE_API_KEY`). Local LLM / Ollama is out of scope. **[confirmed]**

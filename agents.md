@@ -222,14 +222,11 @@ Keep prompts separate from application/business logic so they can be modified an
 
 ## LLM Architecture
 
-Support two initial provider categories:
+The initial LLM provider is the Hugging Face model/API (Inference API).
 
-1. Local LLM
-2. Hugging Face model/API
+The RAG pipeline should interact with an LLM abstraction rather than directly depending on one concrete provider.
 
-The RAG pipeline should interact with an LLM abstraction rather than directly depending on one provider.
-
-Switching the LLM provider should primarily require configuration changes.
+Switching the chosen model/API should primarily require configuration changes.
 
 Never hard-code API keys or credentials.
 
@@ -269,7 +266,6 @@ Potential configuration values include:
 
 ```text
 LLM_PROVIDER
-LOCAL_LLM_MODEL
 HUGGINGFACE_API_KEY
 HUGGINGFACE_MODEL
 EMBEDDING_MODEL
@@ -460,7 +456,6 @@ The plan should consider:
 - metadata design
 - RAG prompt design
 - LLM abstraction
-- local LLM integration
 - Hugging Face integration
 - FastAPI API design
 - configuration

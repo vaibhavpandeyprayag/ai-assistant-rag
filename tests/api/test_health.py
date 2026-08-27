@@ -20,7 +20,6 @@ def test_health_returns_expected_shape() -> None:
     body = response.json()
     assert body["status"] == "ok"
     assert body["version"] == __version__
-    assert body["llm_provider"] in {"local", "hf"}
     assert body["embedding_model"]
 
 

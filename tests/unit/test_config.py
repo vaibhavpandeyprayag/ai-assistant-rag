@@ -10,8 +10,7 @@ from app.config import Settings
 
 def test_defaults(base_settings: Settings) -> None:
     """Sensible documented defaults are applied when nothing is configured."""
-    assert base_settings.llm_provider == "local"
-    assert base_settings.local_llm_model == "llama3.1:8b"
+    assert base_settings.llm_provider == "hf"
     assert base_settings.embedding_provider == "local"
     assert base_settings.embedding_model == "sentence-transformers/all-MiniLM-L6-v2"
     assert base_settings.chunk_size == 1000
@@ -27,27 +26,26 @@ def test_environment_overrides(clean_env) -> None:
     """Environment variables take precedence over defaults."""
     clean_env.setenv("CHUNK_SIZE", "512")
     clean_env.setenv("TOP_K", "9")
-    clean_env.setenv("LLM_PROVIDER", "hf")
     clean_env.setenv("CHROMA_PERSIST_DIRECTORY", "somewhere/else")
 
     settings = Settings(_env_file=None)
 
     assert settings.chunk_size == 512
     assert settings.top_k == 9
-    assert settings.llm_provider == "hf"
     assert settings.chroma_persist_directory.as_posix() == "somewhere/else"
 
 
-def test_chunk_overlap_must_be_smaller_than_chunk_size(clean_env) -> None:
-    clean_env.setenv("CHUNK_SIZE", "500")
-    clean_env.setenv("CHUNK_OVERLAP", "500")
+def test_invalid_llm_provider_rejected(clean_env) -> None:
+    # Only "hf" is a valid provider (local/Ollama was removed from scope).
+    clean_env.setenv("LLM_PROVIDER", "local")
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)
 
 
-def test_invalid_llm_provider_rejected(clean_env) -> None:
-    clean_env.setenv("LLM_PROVIDER", "bogus-provider")
+def test_chunk_overlap_must_be_smaller_than_chunk_size(clean_env) -> None:
+    clean_env.setenv("CHUNK_SIZE", "500")
+    clean_env.setenv("CHUNK_OVERLAP", "500")
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)

@@ -8,5 +8,4 @@ class HealthResponse(BaseModel):
 
     status: str
     version: str
-    llm_provider: str
     embedding_model: str

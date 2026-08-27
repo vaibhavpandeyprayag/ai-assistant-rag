@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Prepare runtime directories on startup; cleanup hook for later phases."""
     settings: Settings = app.state.settings
     settings.ensure_runtime_directories()
-    logger.info("Application started (llm_provider=%s)", settings.llm_provider)
+    logger.info("Application started (embedding_model=%s)", settings.embedding_model)
     yield
     logger.info("Application shutdown")
 
