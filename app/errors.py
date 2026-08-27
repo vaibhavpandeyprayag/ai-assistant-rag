@@ -59,3 +59,17 @@ class VectorStoreError(RagError):
 
     code = "vector_store_error"
     http_status = 500
+
+
+class LLMAuthError(RagError):
+    """Raised when LLM authentication fails (missing/invalid API key)."""
+
+    code = "llm_auth_error"
+    http_status = 503
+
+
+class LLMUnavailableError(RagError):
+    """Raised when the LLM cannot be reached or fails to generate."""
+
+    code = "llm_unavailable"
+    http_status = 503

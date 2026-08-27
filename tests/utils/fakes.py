@@ -4,6 +4,8 @@ import hashlib
 import math
 import re
 
+from app.llm.base import ChatMessage, LLMOptions
+
 _WHITESPACE = re.compile(r"\s+")
 
 
@@ -48,3 +50,33 @@ class FakeEmbeddingProvider:
             bins[digest % self.dimension] += 1.0
         norm = math.sqrt(sum(value * value for value in bins)) or 1.0
         return [value / norm for value in bins]
+
+
+class FakeLLMProvider:
+    """Deterministic LLM provider that records inputs and returns canned text.
+
+    Used so the RAG pipeline is testable without any network or model. The
+    response can be fixed, or raised to simulate a failure.
+    """
+
+    def __init__(
+        self,
+        model_name: str = "fake-llm",
+        response: str = "fake response",
+        error: Exception | None = None,
+    ) -> None:
+        self.model_name = model_name
+        self.response = response
+        self.error = error
+        #: Records every (messages, options) pair passed to generate().
+        self.calls: list[tuple[list[ChatMessage], LLMOptions | None]] = []
+
+    def generate(
+        self,
+        messages: list[ChatMessage],
+        options: LLMOptions | None = None,
+    ) -> str:
+        self.calls.append((messages, options))
+        if self.error is not None:
+            raise self.error
+        return self.response
