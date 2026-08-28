@@ -20,6 +20,10 @@ def test_defaults(base_settings: Settings) -> None:
     assert base_settings.retrieval_min_score == 0.0
     assert base_settings.upload_max_size_mb == 20
     assert base_settings.huggingface_api_key is None
+    assert base_settings.cors_origins == [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
 
 def test_environment_overrides(clean_env) -> None:
@@ -33,6 +37,15 @@ def test_environment_overrides(clean_env) -> None:
     assert settings.chunk_size == 512
     assert settings.top_k == 9
     assert settings.chroma_persist_directory.as_posix() == "somewhere/else"
+
+
+def test_cors_origins_parses_comma_separated_value(clean_env) -> None:
+    """CORS_ORIGINS accepts a comma-separated origin list."""
+    clean_env.setenv("CORS_ORIGINS", "http://a.dev, http://b.dev ,")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.cors_origins == ["http://a.dev", "http://b.dev"]
 
 
 def test_invalid_llm_provider_rejected(clean_env) -> None:

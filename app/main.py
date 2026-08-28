@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
@@ -95,6 +96,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Inject the provided settings instance so routes consistently depend on
     # get_settings() while tests can pass isolated Settings objects.
     app.dependency_overrides[get_settings] = lambda: resolved_settings
+
+    # Allow the browser-based client to call the API cross-origin. The Vite
+    # dev server runs on http://localhost:5173 by default.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved_settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     app.include_router(health.router)
     app.include_router(documents.router)

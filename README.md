@@ -115,6 +115,7 @@ Use environment variables for:
 - ChromaDB persistence path
 - Chunk size/overlap
 - Top-K retrieval
+- Allowed CORS origins
 
 Never hard-code or commit secrets.
 

@@ -6,10 +6,10 @@ in ``SecretStr`` so they are never leaked through logs or serialization.
 """
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, SecretStr, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -24,6 +24,12 @@ class Settings(BaseSettings):
 
     # --- Application -------------------------------------------------------
     log_level: str = Field(default="INFO")
+
+    # --- CORS ----------------------------------------------------------------
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default=["http://localhost:5173", "http://127.0.0.1:5173"],
+        description="Cross-origin request origins allowed by the API",
+    )
 
     # --- LLM ----------------------------------------------------------------
     llm_provider: Literal["hf"] = "hf"
@@ -49,6 +55,14 @@ class Settings(BaseSettings):
 
     # --- Upload limits ------------------------------------------------------------
     upload_max_size_mb: int = Field(default=20, ge=1)
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: object) -> object:
+        """Parse a comma-separated origin list from the environment."""
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
     @model_validator(mode="after")
     def _validate_chunking(self) -> "Settings":

@@ -130,3 +130,25 @@ def test_ingest_empty_list_returns_no_results(settings) -> None:
 
     assert response.status_code == 200
     assert response.json()["results"] == []
+
+
+def test_upload_allows_cors_preflight(settings) -> None:
+    """Browsers must be able to preflight the upload before sending it."""
+    app = _app_with(settings)
+    _override_ingestion(app, FakeIngestionService())
+
+    with TestClient(app) as client:
+        response = client.options(
+            "/documents/upload",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+
+    assert response.status_code == 200
+    assert (
+        response.headers["access-control-allow-origin"]
+        == "http://localhost:5173"
+    )
+    assert "POST" in response.headers["access-control-allow-methods"]
