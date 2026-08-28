@@ -63,7 +63,7 @@ The LLM should answer using retrieved context, avoid unsupported claims, and ind
 
 ### LLM Support
 
-Uses the Hugging Face Inference API for generation, configured via `HUGGINGFACE_API_KEY` and `HUGGINGFACE_MODEL` (e.g. `meta-llama/Llama-3.1-8B-Instruct`).
+Uses the Hugging Face Inference API for generation, configured via `HUGGINGFACE_API_KEY` and `HUGGINGFACE_MODEL` (e.g. `microsoft/Phi-3-mini-4k-instruct`).
 
 LLM selection is configuration-driven so the RAG pipeline does not depend on a hard-coded model.
 

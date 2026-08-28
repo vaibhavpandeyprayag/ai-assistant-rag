@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # --- LLM ----------------------------------------------------------------
     llm_provider: Literal["hf"] = "hf"
-    huggingface_model: str = "meta-llama/Llama-3.1-8B-Instruct"
+    huggingface_model: str = "microsoft/Phi-3-mini-4k-instruct"
     huggingface_api_key: SecretStr | None = None
 
     # --- Embeddings -----------------------------------------------------------

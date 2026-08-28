@@ -73,3 +73,17 @@ class LLMUnavailableError(RagError):
 
     code = "llm_unavailable"
     http_status = 503
+
+
+class FileTooLargeError(RagError):
+    """Raised when an uploaded file exceeds the configured size limit."""
+
+    code = "file_too_large"
+    http_status = 413
+
+
+class DocumentNotFoundError(RagError):
+    """Raised when a referenced uploaded document does not exist."""
+
+    code = "document_not_found"
+    http_status = 404

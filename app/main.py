@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.api.dependencies import get_settings
-from app.api.routes import health
+from app.api.routes import chat, documents, health, search
 from app.config import Settings
 from app.errors import RagError
 
@@ -97,6 +97,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.dependency_overrides[get_settings] = lambda: resolved_settings
 
     app.include_router(health.router)
+    app.include_router(documents.router)
+    app.include_router(search.router)
+    app.include_router(chat.router)
     register_exception_handlers(app)
     return app
 

@@ -7,6 +7,7 @@ the vector store, and returns ranked results that downstream consumers
 
 from typing import Any
 
+from app.config import Settings
 from app.embeddings.base import EmbeddingProvider
 from app.vectordb.base import RetrievedChunk, VectorStoreRepository
 
@@ -61,3 +62,17 @@ class Retriever:
             results = [r for r in results if r.score >= effective_min_score]
 
         return results
+
+
+def create_retriever(
+    settings: Settings,
+    embedder: EmbeddingProvider,
+    store: VectorStoreRepository,
+) -> Retriever:
+    """Build a Retriever from application settings and injected dependencies."""
+    return Retriever(
+        embedder=embedder,
+        store=store,
+        top_k=settings.top_k,
+        min_score=settings.retrieval_min_score,
+    )

@@ -21,7 +21,7 @@ from app.llm.base import ChatMessage, LLMOptions
 from app.llm.factory import create_llm_provider
 from app.llm.hf_llm import HuggingFaceLLM
 
-MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+MODEL = "microsoft/Phi-3-mini-4k-instruct"
 API_KEY = "hf_mocked0000000000000000000000000000"
 
 _captured: list[dict] = []

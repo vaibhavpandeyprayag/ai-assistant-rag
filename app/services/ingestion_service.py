@@ -24,6 +24,15 @@ logger = logging.getLogger(__name__)
 ChunkingStrategy = Literal["recursive", "fixed"]
 
 
+def document_id_for_path(path: Path) -> str:
+    """Derive a stable document ID from a file's resolved path.
+
+    The same file always maps to the same ID, so re-ingesting a document
+    deletes its prior chunks before upserting (idempotent behavior).
+    """
+    return hashlib.sha256(path.resolve().as_posix().encode()).hexdigest()[:32]
+
+
 class IngestionService:
     """Orchestrates the load → chunk → embed → store pipeline.
 
@@ -61,7 +70,7 @@ class IngestionService:
         the resolved file path, so re-ingesting the same file deletes the
         prior chunks first (idempotent upsert).
         """
-        document_id = hashlib.sha256(path.resolve().as_posix().encode()).hexdigest()[:32]
+        document_id = document_id_for_path(path)
         effective_size = chunk_size if chunk_size is not None else self._chunk_size
         effective_overlap = chunk_overlap if chunk_overlap is not None else self._chunk_overlap
         effective_strategy = strategy if strategy is not None else self._chunk_strategy

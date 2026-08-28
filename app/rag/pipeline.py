@@ -76,8 +76,10 @@ class RAGPipeline:
         self._context_builder = ContextBuilder(max_chars=max_context_chars)
         self._llm_options = llm_options
 
-    def answer(self, query: str) -> RAGAnswer:
+    def answer(self, query: str, *, top_k: int | None = None) -> RAGAnswer:
         """Answer ``query`` using retrieved context and supporting sources.
+
+        ``top_k`` overrides the pipeline default when provided.
 
         Raises:
             ValueError: If ``query`` is empty.
@@ -85,9 +87,10 @@ class RAGPipeline:
         if not query.strip():
             raise ValueError("query must not be empty")
 
+        effective_top_k = top_k if top_k is not None else self._top_k
         t0 = time.perf_counter()
 
-        chunks = self._retriever.retrieve(query, top_k=self._top_k)
+        chunks = self._retriever.retrieve(query, top_k=effective_top_k)
         context = self._context_builder.build(chunks)
 
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
