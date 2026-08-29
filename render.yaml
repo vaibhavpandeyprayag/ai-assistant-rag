@@ -1,0 +1,52 @@
+# Render Blueprint for the RAG backend.
+#
+# Usage: push to GitHub, then in the Render dashboard create a "Blueprint"
+# pointing at this repo, or add a Web Service using the commands below.
+#
+# storage: the free plan has an EPHEMERAL filesystem. "data/" (uploads and
+# the Chroma index) is wiped on every restart/redeploy, so documents must be
+# re-uploaded and re-ingested after each deploy. This is intentional.
+#
+# embeddings: Render uses EMBEDDING_PROVIDER=hf so the build stays small
+# (torch/sentence-transformers are Windows-only in requirements.txt) and
+# volatile memory stays low on the free plan.
+services:
+  - type: web
+    name: rag-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LLM_PROVIDER
+        value: hf
+      - key: HUGGINGFACE_MODEL
+        value: meta-llama/Llama-3.1-8B-Instruct
+      # Secret, not part of the blueprint: set HUGGINGFACE_API_KEY in the
+      # Render dashboard after the first deploy.
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: EMBEDDING_PROVIDER
+        value: hf
+      - key: EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: CHROMA_PERSIST_DIRECTORY
+        value: data/chroma
+      - key: UPLOAD_DIRECTORY
+        value: data/uploads
+      - key: CHUNK_SIZE
+        value: "1000"
+      - key: CHUNK_OVERLAP
+        value: "200"
+      - key: CHUNK_STRATEGY
+        value: recursive
+      - key: TOP_K
+        value: "5"
+      # Origins allowed to call this API from a browser (the deployed client).
+      - key: CORS_ORIGINS
+        value: "https://ai-assistant-rag-kvlh.onrender.com"

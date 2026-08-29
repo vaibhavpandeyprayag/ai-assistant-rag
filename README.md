@@ -63,7 +63,7 @@ The LLM should answer using retrieved context, avoid unsupported claims, and ind
 
 ### LLM Support
 
-Uses the Hugging Face Inference API for generation, configured via `HUGGINGFACE_API_KEY` and `HUGGINGFACE_MODEL` (e.g. `microsoft/Phi-3-mini-4k-instruct`).
+Uses the Hugging Face Inference API for generation, configured via `HUGGINGFACE_API_KEY` and `HUGGINGFACE_MODEL` (e.g. `meta-llama/Llama-3.1-8B-Instruct`).
 
 LLM selection is configuration-driven so the RAG pipeline does not depend on a hard-coded model.
 
@@ -167,7 +167,32 @@ pytest
 ruff check .
 ```
 
+`torch` + `sentence-transformers` (local embeddings) install only on Windows
+via requirements markers. On other platforms use `EMBEDDING_PROVIDER=hf` (see
+the Render deployment section).
+
 Runtime settings are configured via environment variables; copy `.env.example` to `.env` for local overrides. Never commit `.env`.
+
+## Deployment (Render)
+
+The repo ships a Render Blueprint (`render.yaml`). The backend deploys as a
+Python web service; the Vite client is deployed separately as a static site
+(its `CORS_ORIGINS` must include the client's URL).
+
+Key points:
+
+- **Ephemeral storage**: the free plan has no persistent disk. `data/`
+  (uploads and the Chroma index) is wiped on every restart/redeploy, so
+  documents must be re-uploaded and re-ingested after each deploy.
+- **Lightweight Linux build**: `torch` and `sentence-transformers` are
+  Windows-only in `requirements.txt`. Render uses `EMBEDDING_PROVIDER=hf`, so
+  embeddings are served by the Hugging Face Inference API and the CUDA torch
+  wheels (~2.5 GB) are never installed.
+- **`HUGGINGFACE_API_KEY`** is not part of the blueprint (`sync: false`); set
+  it in the Render dashboard after the first deploy.
+
+Deploy steps: push to GitHub, then in Render "New +" → Blueprint, select the
+repo, and deploy. The health check hits `GET /health`.
 
 ## Expected Result
 
