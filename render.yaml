@@ -49,4 +49,4 @@ services:
         value: "5"
       # Origins allowed to call this API from a browser (the deployed client).
       - key: CORS_ORIGINS
-        value: "https://ai-assistant-rag-kvlh.onrender.com"
+        value: "https://ai-assistant-rag-demo.onrender.com"
